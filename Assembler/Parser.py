@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import Lex
-
+import Code 
 
 class Parser:
     """
@@ -20,6 +20,8 @@ class Parser:
     def __init__(self, file):
         self.lexer = Lex.Lex(file)
         self._init_instruction_info()
+        self.lineNumber = 0
+        self.wasError = False
 
     def _init_instruction_info(self):
         """
@@ -138,19 +140,130 @@ class Parser:
     def has_more_instructions(self):
         return self.lexer.has_more_instructions()
 
+    def printLinePretty(self, errorLine):
+        returnLine = ''
+        for i in errorLine:
+            returnLine = returnLine + i[1]
+
+        return returnLine
+
+
     def advance(self):
         """
         Gets the next instruction (entire line). Each instruction reside on a physical line.
+
+        Error Checking added for first pass through
         """
         self._init_instruction_info()
-
+        self.lineNumber = self.lineNumber+1
         self.lexer.next_instruction()
+        line = self.lexer.curr_instr_line
         token, val = self.lexer.curr_token
+    
+        ##debug
+        print(line)
 
+        #Check if A type is valid
+        if line[0][1] == '@':
+            if len(line) == 1:
+                print("Error at line number: " + str(self.lineNumber) +"\nExpected something after \'@\' --->" +self.printLinePretty(line))
+                self.wasError = True
+            
+            if len(line) > 2:
+                print("Error at line number: " + str(self.lineNumber) +"\nToo Many Arguments after \'@\' --->" +self.printLinePretty(line))
+                self.wasError = True    
+
+            if line[1][0] == 1:
+                if int(line[1][1]) < 0 or int(line[1][1]) >= 32767:
+                    print("Error at line number: " + str(self.lineNumber) +"\nNumber is not supported --->" +self.printLinePretty(line))
+                    self.wasError = True
+
+            if line[1][0] != 1 and line[1][0] != 2: 
+                print("Error at line number: " + str(self.lineNumber) +"\nInvalid Symbol --->" +self.printLinePretty(line))
+                self.wasError = True
+
+        #Check if L Type is Valid
+        elif line[0][1] == '(':
+            if len(line) != 3:
+                print("Error at line number: " + str(self.lineNumber) +"\nInvalid Number of Arguments for Label --->" +self.printLinePretty(line))
+                self.wasError = True
+
+            if line[1][0] != 2:
+                print("Error at line number: " + str(self.lineNumber) +"\nInvalid Label Name --->" +self.printLinePretty(line))
+                self.wasError = True
+      
+            if line[2][1] != ')':
+                print("Error at line number: " + str(self.lineNumber) +"\nInvalid Label, Are you missing \')\'? --->" +self.printLinePretty(line))
+                self.wasError = True
+        
+
+
+        #Check if C Type is Valid 
+        #starts with symbol
+        elif line[0][0] == Lex.SYMBOL and line[0][1] not in Code.Code._dest_codes or line[0][0] == Lex.NUMBER and line[0][1] != '0':
+            print("Error at line number: " + str(self.lineNumber) +"\nInvalid Destination --->" +self.printLinePretty(line))
+            self.wasError = True
+        elif line[0][0] == Lex.SYMBOL and line[0][1] in Code.Code._dest_codes:
+            if line[1][0] == Lex.OPERATION and line[1][1] == '=':
+                eqPassed = False
+                destPassed = False
+                checkComp = ''
+                checkDest = ''
+                for temp in line:
+                    if eqPassed:
+                        if destPassed:
+                            checkDest = checkDest + temp[1]
+                        else:
+                            if temp[1] != ';':
+                                checkComp = checkComp + temp[1]
+                            else:
+                                destPassed = True
+                    elif temp[1] == '=':
+                        eqPassed = True
+                    else:
+                        pass
+
+                if checkComp not in Code.Code._comp_codes:
+                    print("Error at line number: " + str(self.lineNumber) +"\nInvalid Computation --->" +self.printLinePretty(line))
+                    self.wasError = True
+                
+                elif checkDest not in Code.Code._dest_codes:
+                    print("Error at line number: " + str(self.lineNumber) +"\nInvalid Destination after ; --->" +self.printLinePretty(line))
+                    self.wasError = True
+            elif line[1][1] != ';':
+                print("Error at line number: " + str(self.lineNumber) +"\nInvalid operation after destination --->" +self.printLinePretty(line))
+                self.wasError = True
+
+        #starts with number
+        elif line[0][1] == '0':
+            if(line[1][1] != ';'):
+                print("Error at line number: " + str(self.lineNumber) +"\nInvalid Command, expected ; --->" +self.printLinePretty(line))
+                self.wasError = True
+            else:
+                if line[2][1] not in Code.Code._jump_codes:
+                    print("Error at line number: " + str(self.lineNumber) +"\nInvalid Command, expected ; --->" +self.printLinePretty(line))
+                    self.wasError = True
+        elif line[0][0] == Lex.OPERATION:
+            if line[0][1] != ';':
+                print("Error at line number: " + str(self.lineNumber) +"\nInvalid statement --->" +self.printLinePretty(line))
+                self.wasError = True
+            elif line[1][1] not in Code.Code._jump_codes:
+                print("Error at line number: " + str(self.lineNumber) +"\nInvalid Command, expected ; --->" +self.printLinePretty(line))
+                self.wasError = True
+            elif len(line) > 2:
+                print("Error at line number: " + str(self.lineNumber) +"\nToo many arguments after ; --->" +self.printLinePretty(line))
+                self.wasError = True
+
+
+        #line is good
         if token == Lex.OPERATION and val == '@':
             self._a_instruction()
         elif token == Lex.OPERATION and val == '(':
             self._l_instruction()
         else:
             self._c_instruction(token, val)
+        #else:
+            ##line was not good for some unfound reaseon
+            #print("Error at line number: " + str(self.lineNumber) +"Unchecked Reason --->" +self.printLinePretty(line))
+            #self.wasError = True
 

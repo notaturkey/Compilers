@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import re
+import copy
 
 # Number constant i.e. '123'
 NUMBER = 1
@@ -36,6 +37,7 @@ class Lex(object):
         self._tokens = self._tokenize(self._lines.split('\n'))
         # List of tokens for current instruction
         self.curr_instr_tokens = []
+        self.curr_instr_line = []
         # Current token of current instruction
         self.curr_token = (ERROR, 0)
 
@@ -52,7 +54,10 @@ class Lex(object):
         return re.match(re_str, word) is not None
 
     def _tokenize(self, lines):
-        return [t for t in [self._tokenize_line(l) for l in lines] if t]
+        this = [t for t in
+        [self._tokenize_line(l) for l in lines] if t]
+        #print(this)
+        return this
 
     def _tokenize_line(self, line):
         return [self._token(word) for word in self._split(self._remove_comment(line))]
@@ -61,6 +66,10 @@ class Lex(object):
         return self._comment.sub('', line)
 
     def _split(self, line):
+        #print(self._word.findall(line))
+        #split_line = (self._word.findall(line))
+        #if split_line:
+        #    print(split_line[0])
         return self._word.findall(line)
 
     def _token(self, word):
@@ -77,7 +86,8 @@ class Lex(object):
         return self._tokens != []
 
     def next_instruction(self):
-        self.curr_instr_tokens = self._tokens.pop(0)
+        self.curr_instr_line = self._tokens.pop(0)
+        self.curr_instr_tokens = copy.copy(self.curr_instr_line)
         self.next_token()
         return self.curr_instr_tokens
 

@@ -20,6 +20,7 @@ class Assembler:
     def __init__(self):
         self.symbol_address = 16
         self.symbols_table = SymbolTable.SymbolTable()
+        self.wasError = False
 
     @staticmethod
     def get_hack_file(asm_file):
@@ -61,8 +62,14 @@ class Assembler:
             if inst_type in [parser.A_INSTRUCTION, parser.C_INSTRUCTION]:
                 curr_address += 1
             elif inst_type == parser.L_INSTRUCTION:
-                self.symbols_table.add_entry(parser.symbol, curr_address)
-
+                if self.symbols_table.contains(parser.symbol):
+                    print("Error at line:"+ str(parser.lineNumber)+"\nTheres already a label with name --->"+parser.symbol)
+                    self.wasError = True
+                else:
+                    self.symbols_table.add_entry(parser.symbol, curr_address)
+        
+        self.wasError = parser.wasError
+            
     def pass_2(self, asm_file, hack_file):
         """
         Second compilation pass: Generate hack machine code and write results to output file.
@@ -70,18 +77,27 @@ class Assembler:
         :param hack_file: Output file to write Hack Machine Code output to.
         :return: None.
         """
-        parser = Parser.Parser(asm_file)
-        with open(hack_file, 'w', encoding='utf-8') as hack_file:
-            code = Code.Code()
-            while parser.has_more_instructions():
-                parser.advance()
-                inst_type = parser.instruction_type
-                if inst_type == parser.A_INSTRUCTION:
-                    hack_file.write(code.gen_a_instruction(self._get_address(parser.symbol)) + '\n')
-                elif inst_type == parser.C_INSTRUCTION:
-                    hack_file.write(code.gen_c_instruction(parser.dest, parser.comp, parser.jmp) + '\n')
-                elif inst_type == parser.L_INSTRUCTION:
-                    pass
+        if(not self.wasError):
+            parser = Parser.Parser(asm_file)
+            with open(hack_file, 'w', encoding='utf-8') as hack_file:
+                code = Code.Code()
+                while parser.has_more_instructions():
+                    parser.advance()
+                    inst_type = parser.instruction_type
+                    if inst_type == parser.A_INSTRUCTION:
+                        hack_file.write(code.gen_a_instruction(self._get_address(parser.symbol)) + '\n')
+                    elif inst_type == parser.C_INSTRUCTION:
+                        hack_file.write(code.gen_c_instruction(parser.dest, parser.comp, parser.jmp) + '\n')
+                    elif inst_type == parser.L_INSTRUCTION:
+                        pass
+
+    def print_symbol_table(self, table):
+        #prints symbol table
+        if(table):
+            for i in self.symbols_table:
+                print(i + ":" + str(self.symbols_table[i]))
+                
+
 
     def assemble(self, file):
         """
@@ -91,14 +107,29 @@ class Assembler:
         """
         self.pass_1(file)
         self.pass_2(file, self.get_hack_file(file))
+        self.print_symbol_table(print_table)
+
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 2:
-        print("Usage: python Assembler.py Program.asm")
+    print("All credit to Copyright (c) 2016 Ahmad Alhour for the source code, extended functionality was implemented by me (Thomas McDonald)")
+    if len(sys.argv) == 3:
+        if sys.argv[2] == "-export":
+            print("Exporting Symbol Table")
+            print_table = True
+            asm_file = sys.argv[1]
+        else:    
+            print("Usage: python Assembler.py Program.asm -export(optional)")
+    elif len(sys.argv) != 2:
+        print("Usage: python Assembler.py Program.asm -export(optional)")
     else:
         asm_file = sys.argv[1]
-
+        print_table = False
+    print("Assembling...")
     hack_assembler = Assembler()
     hack_assembler.assemble(asm_file)
+    if hack_assembler.wasError:
+        print("Did Not Assemble Due to Errors")
+    else:
+        print("Assembled Successfully")
 

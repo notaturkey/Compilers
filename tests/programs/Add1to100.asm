@@ -1,6 +1,7 @@
 // Adds numbers from 1 until 100: 1 + 2 + ... + 99 + 100.
+@i    // variable 'i', refers to some RAM location
 
-@i      // variable 'i', refers to some RAM location
+
 M=1
 @sum    // variable 'sum', refers to some RAM location
 M=0
