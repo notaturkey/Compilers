@@ -34,6 +34,13 @@ class Assembler:
         else:
             return asm_file + '.hack'
 
+    @staticmethod
+    def get_export_file(asm_file):
+        if asm_file.endswith('.asm'):
+            return asm_file.replace('.asm', 'export_table.txt')
+        else:
+            return asm_file + 'export_table.txt'
+
     def _get_address(self, symbol):
         """
         Helper method. Looks-up the address of a symbol (decimal value, label or variable).
@@ -90,12 +97,16 @@ class Assembler:
                         hack_file.write(code.gen_c_instruction(parser.dest, parser.comp, parser.jmp) + '\n')
                     elif inst_type == parser.L_INSTRUCTION:
                         pass
+            hack_file.close()
 
-    def print_symbol_table(self, table):
+    def print_symbol_table(self, table,export_file):
         #prints symbol table
         if(table):
-            for i in self.symbols_table:
-                print(i + ":" + str(self.symbols_table[i]))
+            with open(export_file, 'w', encoding='utf-8') as export_file:
+                for i in self.symbols_table:
+                    export_file.write(i + ":" + str(self.symbols_table[i]) + '\n')
+            export_file.close()
+            print('Exported Symbol Table')
                 
 
 
@@ -107,7 +118,7 @@ class Assembler:
         """
         self.pass_1(file)
         self.pass_2(file, self.get_hack_file(file))
-        self.print_symbol_table(print_table)
+        self.print_symbol_table(print_table,self.get_export_file(file))
 
 
 
@@ -115,7 +126,7 @@ if __name__ == '__main__':
     print("All credit to Copyright (c) 2016 Ahmad Alhour for the source code, extended functionality was implemented by me (Thomas McDonald)")
     if len(sys.argv) == 3:
         if sys.argv[2] == "-export":
-            print("Exporting Symbol Table")
+            print("Export Symbol Table Enabeled")
             print_table = True
             asm_file = sys.argv[1]
         else:    

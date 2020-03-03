@@ -163,6 +163,9 @@ class Parser:
         ##debug
         ##print(line)
 
+
+        ##All This looks awful, will fix later 
+        ##
         #Check if A type is valid
         if line[0][1] == '@':
             if len(line) == 1:
@@ -205,6 +208,7 @@ class Parser:
             self.wasError = True
         elif line[0][0] == Lex.SYMBOL and line[0][1] in Code.Code._dest_codes:
             if line[1][0] == Lex.OPERATION and line[1][1] == '=':
+                ##Parse expression a bit more 
                 eqPassed = False
                 destPassed = False
                 checkComp = ''
@@ -220,15 +224,19 @@ class Parser:
                                 destPassed = True
                     elif temp[1] == '=':
                         eqPassed = True
-                    else:
-                        pass
-
-                if checkComp not in Code.Code._comp_codes:
+                
+                ##done parsing error check some more 
+                if not checkComp and eqPassed:
+                    print("Error at line number: " + str(self.lineNumber) +"\nNo Computation Found--->" +self.printLinePretty(line))
+                    self.wasError = True
+                elif checkComp not in Code.Code._comp_codes:
                     print("Error at line number: " + str(self.lineNumber) +"\nInvalid Computation --->" +self.printLinePretty(line))
                     self.wasError = True
-                
                 elif checkDest not in Code.Code._dest_codes:
                     print("Error at line number: " + str(self.lineNumber) +"\nInvalid Destination after ; --->" +self.printLinePretty(line))
+                    self.wasError = True
+                elif destPassed and not checkDest:
+                    print("Error at line number: " + str(self.lineNumber) +"\nNull Destination after ; --->" +self.printLinePretty(line))
                     self.wasError = True
             elif line[1][1] != ';':
                 print("Error at line number: " + str(self.lineNumber) +"\nInvalid operation after destination --->" +self.printLinePretty(line))
@@ -254,6 +262,9 @@ class Parser:
                 print("Error at line number: " + str(self.lineNumber) +"\nToo many arguments after ; --->" +self.printLinePretty(line))
                 self.wasError = True
 
+        
+        ####TODO
+        ####CHECK .EQU TYPE 
 
         #line is good
         if token == Lex.OPERATION and val == '@':
