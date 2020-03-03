@@ -161,7 +161,7 @@ class Parser:
         token, val = self.lexer.curr_token
     
         ##debug
-        print(line)
+        ##print(line)
 
         #Check if A type is valid
         if line[0][1] == '@':
