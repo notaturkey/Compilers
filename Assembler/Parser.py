@@ -16,6 +16,7 @@ class Parser:
     A_INSTRUCTION = 0   # Addressing Instruction.
     C_INSTRUCTION = 1   # Computation Instruction.
     L_INSTRUCTION = 2   # Label-Declaration pseudo-Instruction.
+    EQU_INSTRUCTION = 3
 
     def __init__(self, file):
         self.lexer = Lex.Lex(file)
@@ -32,6 +33,7 @@ class Parser:
         self._dest = ''
         self._comp = ''
         self._jmp = ''
+        self._value = -1
 
     def _a_instruction(self):
         """
@@ -50,6 +52,16 @@ class Parser:
         """
         self._instruction_type = Parser.L_INSTRUCTION
         tok_type, self._symbol = self.lexer.next_token()
+
+    def _EQU_instruction(self):
+        """
+        Symbol Declaration instruction. Symbolic syntax: (LABEL_NAME), where LABEL_NAME is any desired name for the
+        label. Example: (LOOP), (END).
+        """
+        self._instruction_type = Parser.EQU_INSTRUCTION
+        tok_type, self._symbol = self.lexer.next_token()
+        tok_type, self._value = self.lexer.next_token()
+
 
     def _c_instruction(self, token, value):
         """
@@ -161,7 +173,7 @@ class Parser:
         token, val = self.lexer.curr_token
     
         ##debug
-        ##print(line)
+        print(line)
 
 
         ##All This looks awful, will fix later 
@@ -172,16 +184,16 @@ class Parser:
                 print("Error at line number: " + str(self.lineNumber) +"\nExpected something after \'@\' --->" +self.printLinePretty(line))
                 self.wasError = True
             
-            if len(line) > 2:
+            elif len(line) > 2:
                 print("Error at line number: " + str(self.lineNumber) +"\nToo Many Arguments after \'@\' --->" +self.printLinePretty(line))
                 self.wasError = True    
 
-            if line[1][0] == 1:
+            elif line[1][0] == 1:
                 if int(line[1][1]) < 0 or int(line[1][1]) >= 32767:
                     print("Error at line number: " + str(self.lineNumber) +"\nNumber is not supported --->" +self.printLinePretty(line))
                     self.wasError = True
 
-            if line[1][0] != 1 and line[1][0] != 2: 
+            elif line[1][0] != 1 and line[1][0] != 2: 
                 print("Error at line number: " + str(self.lineNumber) +"\nInvalid Symbol --->" +self.printLinePretty(line))
                 self.wasError = True
 
@@ -199,8 +211,21 @@ class Parser:
                 print("Error at line number: " + str(self.lineNumber) +"\nInvalid Label, Are you missing \')\'? --->" +self.printLinePretty(line))
                 self.wasError = True
         
-
-
+        #Check if .EQU
+        elif line[0][1] == '.EQU':
+            if len(line) != 3:
+                print("Error at line number: " + str(self.lineNumber) +"\nInvalid EQU statement, Incorrect number of arguments (.EQU symbol value) --->" +self.printLinePretty(line))
+                self.wasError = True
+            elif line[1][0] != 2 and line[2][0] != 1: 
+                print("Error at line number: " + str(self.lineNumber) +"\nInvalid EQU statement invalid symbol or value (.EQU symbol value) --->" +self.printLinePretty(line))
+                self.wasError = True
+            else:
+                if int(line[2][1]) < 0 and int(line[2][1])>= 32767:
+                    print("Error at line number: " + str(self.lineNumber) +"\nNumber is not supported --->" +self.printLinePretty(line))
+                    self.wasError = True
+                else:
+                    self._EQU_instruction()
+                    return
         #Check if C Type is Valid 
         #starts with symbol
         elif line[0][0] == Lex.SYMBOL and line[0][1] not in Code.Code._dest_codes or line[0][0] == Lex.NUMBER and line[0][1] != '0':

@@ -24,3 +24,29 @@ class SymbolTable(dict):
     def get_address(self, symbol):
         return self[symbol]
 
+class LabelTable(dict):   
+    # __init__ function 
+    def __init__(self): 
+        super().__init__()
+  
+    # Function to add key:value 
+    def add(self, key, value): 
+        self[key] = value 
+
+class VarTable(dict):   
+    # __init__ function 
+    def __init__(self): 
+        super().__init__()
+  
+    # Function to add key:value 
+    def add(self, key, value): 
+        self[key] = value 
+
+class EQUTable(dict):   
+    # __init__ function 
+    def __init__(self): 
+        super().__init__()
+  
+    # Function to add key:value 
+    def add(self, key, value): 
+        self[key] = value 
