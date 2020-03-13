@@ -1,7 +1,7 @@
 // Computes R0 = 2 + 3
 // R0 refers to RAM[0]
 
-@2
+@0x001F
 D=A     // D = 2
 
 @3

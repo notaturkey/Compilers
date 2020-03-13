@@ -1,8 +1,6 @@
 // Adds numbers from 1 until 100: 1 + 2 + ... + 99 + 100.
 @i    // variable 'i', refers to some RAM location
-
-
-M=1
+3
 @sum    // variable 'sum', refers to some RAM location
 M=0
 
@@ -30,4 +28,3 @@ M=0
 (END)
     @END
     0;JMP   // End of program infinite loop
-

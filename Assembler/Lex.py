@@ -24,7 +24,11 @@ class Lex(object):
     TODO: Error checking on the tokens.
     """
     # Internal regular expression patterns
-    _number_re = r'\d+'
+    _hex_re_comp = re.compile(r'0[xX][0-9a-fA-F]+')
+    _binary_re_comp = re.compile(r'0[bB][01]+')
+    _hex_re = r'0[xX][0-9a-fA-F]+'
+    _binary_re = r'0[bB][01]+'
+    _number_re = r'\d+' + '|'+ _hex_re+ '|' + _binary_re
     _symbol_start_re = r'\w_.$:'
     _symbol_re = '[' + _symbol_start_re + '][' + _symbol_start_re + r'\d]*'
     _operation_re = r'[=;()@+\-&|!]'
@@ -33,6 +37,7 @@ class Lex(object):
 
     def __init__(self, asm_file_name):
         file = open(asm_file_name, 'r')
+        self.lineNum = 0
         self._lines = file.read()
         self._tokens = self._tokenize(self._lines.split('\n'))
         # List of tokens for current instruction
@@ -45,7 +50,7 @@ class Lex(object):
         return self._is_match(self._operation_re, word)
 
     def _is_number(self, word):
-        return self._is_match(self._number_re, word)
+        return self._is_match(self._number_re, word) or self._is_match(self._hex_re, word) or self._is_match(self._binary_re, word)
 
     def _is_symbol(self, word):
         return self._is_match(self._symbol_re, word)
@@ -54,13 +59,19 @@ class Lex(object):
         return re.match(re_str, word) is not None
 
     def _tokenize(self, lines):
-        this = [t for t in
-        [self._tokenize_line(l) for l in lines] if t]
+        this = [t for t in [self._tokenize_line(l) for l in lines]]
+        count = 0
+        for i in this:
+            if not i:
+                this[count] = ["BLANK LINE"]
+            count = count +1
         #print(this)
         return this
 
     def _tokenize_line(self, line):
-        return [self._token(word) for word in self._split(self._remove_comment(line))]
+        this = [self._token(word) for word in self._split(self._remove_comment(line))]
+        #print(this)
+        return this
 
     def _remove_comment(self, line):
         return self._comment.sub('', line)
@@ -70,10 +81,21 @@ class Lex(object):
         #split_line = (self._word.findall(line))
         #if split_line:
         #    print(split_line[0])
+        if len(line.split('@')) != 1:
+            if self._binary_re_comp.match(line.split('@')[1]) is not None:
+                return ['@',(self._binary_re_comp.findall(line.split('@')[1])[0])]
+            if self._hex_re_comp.match(line.split('@')[1]) is not None:
+                return ['@',(self._hex_re_comp.findall(line.split('@')[1])[0])]
         return self._word.findall(line)
 
     def _token(self, word):
         if self._is_number(word):
+            if self._binary_re_comp.match(word):
+                word = str(int( re.split(r'[bB]',word)[1] , 2))
+                return NUMBER, word
+            if self._hex_re_comp.match(word):
+                word = str(int( re.split(r'[xX]',word)[1] , 16))
+                return NUMBER, word
             return NUMBER, word
         elif self._is_symbol(word):
             return SYMBOL, word
@@ -87,6 +109,11 @@ class Lex(object):
 
     def next_instruction(self):
         self.curr_instr_line = self._tokens.pop(0)
+        self.lineNum = self.lineNum + 1
+        #print(self.curr_instr_line)
+        if self.curr_instr_line[0] == 'BLANK LINE':
+            return self.next_instruction
+
         self.curr_instr_tokens = copy.copy(self.curr_instr_line)
         self.next_token()
         return self.curr_instr_tokens

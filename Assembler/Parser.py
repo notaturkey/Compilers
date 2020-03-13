@@ -167,15 +167,15 @@ class Parser:
         Error Checking added for first pass through
         """
         self._init_instruction_info()
-        self.lineNumber = self.lineNumber+1
         self.lexer.next_instruction()
+        self.lineNumber = self.lexer.lineNum
         line = self.lexer.curr_instr_line
         token, val = self.lexer.curr_token
-    
-        ##debug
         print(line)
-
-
+        ##debug
+        if line[0] == 'BLANK LINE':
+            return self.advance
+        
         ##All This looks awful, will fix later 
         ##
         #Check if A type is valid
@@ -189,7 +189,7 @@ class Parser:
                 self.wasError = True    
 
             elif line[1][0] == 1:
-                if int(line[1][1]) < 0 or int(line[1][1]) >= 32767:
+                if int(line[1][1]) < 0 or int(line[1][1]) > 32767:
                     print("Error at line number: " + str(self.lineNumber) +"\nNumber is not supported --->" +self.printLinePretty(line))
                     self.wasError = True
 
@@ -220,7 +220,7 @@ class Parser:
                 print("Error at line number: " + str(self.lineNumber) +"\nInvalid EQU statement invalid symbol or value (.EQU symbol value) --->" +self.printLinePretty(line))
                 self.wasError = True
             else:
-                if int(line[2][1]) < 0 and int(line[2][1])>= 32767:
+                if int(line[2][1]) < 0 and int(line[2][1])> 32767:
                     print("Error at line number: " + str(self.lineNumber) +"\nNumber is not supported --->" +self.printLinePretty(line))
                     self.wasError = True
                 else:
@@ -286,10 +286,6 @@ class Parser:
             elif len(line) > 2:
                 print("Error at line number: " + str(self.lineNumber) +"\nToo many arguments after ; --->" +self.printLinePretty(line))
                 self.wasError = True
-
-        
-        ####TODO
-        ####CHECK .EQU TYPE 
 
         #line is good
         if token == Lex.OPERATION and val == '@':
