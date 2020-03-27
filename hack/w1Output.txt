@@ -1,0 +1,17 @@
+All credit to Copyright (c) 2016 Ahmad Alhour for the source code, extended functionality was implemented by me (Thomas McDonald)
+Assembling...
+Error at line number: 4
+Too Many Arguments after '@' --->@-1
+Error at line number: 6
+Number is not supported --->@32768
+Error at line number: 7
+Invalid Computation --->M=DM
+Error at line number: 9
+Invalid Destination --->R0=D|M
+Error at line number: 11
+Invalid Destination after ; --->M=D+M;JFS
+Error at line number: 15
+Invalid Destination --->R16383=24242
+Error at line number: 18
+Too Many Arguments after '@' --->@16383ThisisjustbeforethestartofSCREENmemory
+Did Not Assemble Due to Errors
